@@ -170,7 +170,8 @@ def parseDrawables(drawables):
                 textStorage = getElm(drawObj,'sf:text-storage')
                 textBody = getElm(textStorage,'sf:text-body')
                 pList = getElmList(textBody,'sf:p')
-                
+                print ' pList:%s'%(pList)
+                # UnicodeDecodeError: 'ascii' codec can't decode byte 0xc2 in position 0: ordinal not in range(128)
                 text = '¥n'.join(getText(p) for p in pList)
                 print ' text:%s'%(text)
             print
@@ -250,6 +251,7 @@ def parseApxm(dir,pageNum):
     pageNum-=1
     #print sys.getrecursionlimit()
     print 'parsing'
+    print os.path.join(dir,'index.apxl')
     dom1 = xml.dom.minidom.parse(os.path.join(dir,'index.apxl'))
     print dom1.documentElement.tagName        
     slides = getElmList(getElm(dom1,'key:slide-list'),'key:slide')
@@ -325,7 +327,7 @@ def unarchive(zipFilePath):
             outfile.close()
 
     print 'unarchive end.',None,dir
-    return True,'',dir
+    return dir
 
 
 def main():
@@ -333,6 +335,7 @@ def main():
         print 'Usage : # python Keynote2iOS.py filename'
         quit()
     path = os.path.abspath(sys.argv[1])
-    parseApxm(path,12)
+    folderpath = unarchive(path)
+    parseApxm(folderpath,2)
 
 if __name__ == '__main__': main()
