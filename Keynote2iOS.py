@@ -366,20 +366,21 @@ def unarchive(zipFilePath):
     print 'unarchive end.',None,dir
     return dir
 
-
+def pageCount(folderpath):
+    dom1 = xml.dom.minidom.parse(os.path.join(folderpath,'index.apxl'))
+    slides = getElmList(getElm(dom1,'key:slide-list'),'key:slide')
+    return len(slides)
 
 def parseApxm(dir,pageNum):
     #parseする。forgraundLayerまでたどり着き、あとはdrawablesをparseDrawablesに任せる
     
     #page番号はを0からはじめる
     #print sys.getrecursionlimit()
-    print '================'
-    print 'parsing page %d'%pageNum
-    print '================'
+    print '===== page %d ====='%pageNum
     pageNum-=1
-    print os.path.join(dir,'index.apxl')
+    log( os.path.join(dir,'index.apxl') )
     dom1 = xml.dom.minidom.parse(os.path.join(dir,'index.apxl'))
-    print dom1.documentElement.tagName        
+    log( dom1.documentElement.tagName )     
     slides = getElmList(getElm(dom1,'key:slide-list'),'key:slide')
     if (pageNum >= len(slides)):
         print 'Error:slides do not have page %d'%pageNum
@@ -409,7 +410,6 @@ def parseApxm(dir,pageNum):
 #    print n.getAttribute('sfa:ID')
 #    print n.getAttribute('key:depth')
     dom1.unlink()
-    print 'end parsing'
 
 def main():
     if len(sys.argv) <2:
@@ -417,6 +417,8 @@ def main():
         quit()
     path = os.path.abspath(sys.argv[1])
     folderpath = unarchive(path)
-    parseApxm(folderpath,2)
+    pages = pageCount(folderpath)
+    for i in range(1,pages+1):
+        parseApxm(folderpath,i)
 
 if __name__ == '__main__': main()
