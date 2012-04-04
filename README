@@ -1,6 +1,6 @@
 Keynote2iOS
 
-This script convert the keynote file which contains mockup for iPhone app to the Obj-c code.
+This script convert the keynote file which contains mockup for iPhone app to the Obj-c code. Obj-c output contains layouts of parts and don't contain code for interactions.
 
 =======
 Usage :
