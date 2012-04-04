@@ -1,0 +1,9 @@
+Keynote2iOS
+
+This script convert the keynote file which contains mockup for iPhone app to the Obj-c code.
+
+=======
+Usage :
+=======
+  $ python Keynote2iOS.py filename
+  

@@ -413,7 +413,8 @@ def parseApxm(dir,pageNum):
 
 def main():
     if len(sys.argv) <2:
-        print 'Usage : # python Keynote2iOS.py filename'
+        print 'Usage :'
+        print '  $ python Keynote2iOS.py filename'
         quit()
     path = os.path.abspath(sys.argv[1])
     folderpath = unarchive(path)
