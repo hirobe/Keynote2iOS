@@ -7,3 +7,19 @@ Usage :
 =======
   $ python Keynote2iOS.py filename
   
+  
+=========
+Futures :
+=========
+* Transform element to cocoa Objects:
+   Png image -> UIImage
+   Png image with hyperlink -> UIButton
+   Text box -> UILabel (font size and font color is supperted.)
+   Jpeg image -> Ignored
+   (Because jpeg image is ignored, you can use jpeg image as guide.)
+* Output relative locaton from gray area of master slides
+  (base posidion is left and top of '__base.png' image conteined on master slides)
+* Output locaiton for retina display
+  (locaiton x and y is half pixcel of keynotes file)
+
+
