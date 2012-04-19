@@ -71,15 +71,27 @@ def makeUIName(baseString):
 
     
 def outputAddImage(left,top,width,height,filename,parentName):
-    viewName = 'imageView'
-    if filename[-7:]=='@2x.png':
+    if filename[-7:].lower()=='@2x.png':
         filename = filename[:-7]+'.png'
-    
     viewName = makeUIName(filename[:-4]+"ImageView")
-    
+
     print '    UIImageView *%s = [[UIImageView alloc] init];'%viewName
     print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff)];'%(viewName,left,top,width,height)
     print '    %s.image = [UIImage imageNamed:@"%s"];'%(viewName,filename)
+    print '    [%s addSubview:%s];'%(parentName,viewName)
+    print '    [%s release];'%viewName
+    print ''
+
+def outputAddButton(left,top,width,height,filename,parentName):
+    if filename[-7:].lower()=='@2x.png':
+        filename = filename[:-7]+'.png'
+    viewName = makeUIName(filename[:-4]+"ImageView")
+
+    print '    UIButton *%s = [UIButton buttonWithType:UIButtonTypeCustom];'%viewName
+    print '    %s.exclusiveTouch = YES;'%viewName
+    print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff)];'%(viewName,left,top,width,height)
+    print '    [%s setImage:[UIImage imageNamed:@"%s"] forState:UIControlStateNormal];'%(viewName,filename)
+    print '    //[%s addTarget:self action:@selector(%sTouched:) forControlEvents:UIControlEventTouchUpInside];'%(viewName,viewName)
     print '    [%s addSubview:%s];'%(parentName,viewName)
     print '    [%s release];'%viewName
     print ''
@@ -200,6 +212,11 @@ def createSrcOfBezier(id,bezier,styleRef,posX,posY):
 def parseDrawables(drawables,baseLeft,baseTop):
     for drawObj in drawables.childNodes:
         if drawObj.tagName == 'sf:media':
+            # hyper link sf:href="?slide=+1"
+            href = drawObj.getAttribute('sf:href')
+            if href is not None:
+                log('href')
+        
             imageMedia = getElm(getElm(drawObj,'sf:content'),'sf:image-media')
             log( imageMedia.tagName )
             if imageMedia.tagName=='sf:image-media':
@@ -214,11 +231,14 @@ def parseDrawables(drawables,baseLeft,baseTop):
                     path = data.getAttribute('sf:path')
                     log( ' filePath:%s'%(path) )
                     
-                    if path[-4:]=='.jpg':
-                        baseLeft = left
-                        baseTop = top
-                    else:
+                    if path[-4:].lower() == '.jpg' or path[-5:].lower() == '.jpeg':
+                        continue
+                    
+                    if href is None:
                         outputAddImage(left-baseLeft,top-baseTop,width,height,path,'self')
+                    else:
+                        outputAddButton(left-baseLeft,top-baseTop,width,height,path,'self')
+                    
                     
                     unfilteredImages[id]=path
                     
@@ -279,8 +299,9 @@ def parseDrawables(drawables,baseLeft,baseTop):
                             outputAddLabel(left-baseLeft,top-baseTop,width,height,text,'self',[pStyleName,spanStyleName])
                     
 
-                text = '¥n'.join(getText(p) for p in pList)
-                log( ' text:%s'%(text) )
+                #log('plist :%s'%[getText(s) for s in pList])
+                #text = '¥n'.join(getText(pText) for pText in pList)
+                #log( ' text:%s'%(text) )
                  
                 
             
