@@ -22,6 +22,7 @@ outputScale = 0.5
 styleVar = {}
 outputDraws = []
 unfilteredImages = {}
+uiNameCountDic = {}
 
 class MyClass(object):
     '''
@@ -41,10 +42,40 @@ def log(string):
 def output(string):
     print string
     
+def makeUIName(baseString):
+    charList = []
+    if baseString == [c.upper() for c in baseString]:
+        baseString = baseString.lower()
+        
+    upFlag = True
+    for ch in baseString:
+        if ch == ' ' or ch == '_' or ch == '-':
+            upFlag = True
+            continue
+        if upFlag == True:
+            ch = ch.upper()
+        if len(charList) ==0:
+            ch = ch.lower()
+        charList.append(ch)
+        upFlag = False
+
+    nameKey = ''.join(charList)
+    retStr = nameKey 
+    if nameKey in uiNameCountDic:
+        sameCount =  uiNameCountDic[nameKey] +1
+        uiNameCountDic[nameKey] = sameCount
+        retStr = nameKey + str(sameCount)
+    else:
+        uiNameCountDic[nameKey] = 1
+    return retStr        
+
+    
 def outputAddImage(left,top,width,height,filename,parentName):
     viewName = 'imageView'
     if filename[-7:]=='@2x.png':
         filename = filename[:-7]+'.png'
+    
+    viewName = makeUIName(filename[:-4]+"ImageView")
     
     print '    UIImageView *%s = [[UIImageView alloc] init];'%viewName
     print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff)];'%(viewName,left,top,width,height)
@@ -55,6 +86,8 @@ def outputAddImage(left,top,width,height,filename,parentName):
 
 def outputAddLabel(left,top,width,height,text,parentName,styleNames):
     viewName = 'label'
+    viewName = makeUIName("Label")
+
     styles = {}
     for styleName in styleNames:
         log(styleName)
@@ -63,6 +96,7 @@ def outputAddLabel(left,top,width,height,text,parentName,styleNames):
             tempStyle = styleVar[styleName]
             for key in tempStyle.keys():
                 styles[key] = tempStyle[key]
+    
     
     print '    UILabel *%s = [[UILabel alloc] init'%viewName
     print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff)];'%(viewName,left,top,width,height)
@@ -436,6 +470,7 @@ def parseApxm(dir,pageNum):
     #print sys.getrecursionlimit()
     print '===== page %d ====='%pageNum
     pageNum-=1
+    uiNameCountDic.clear()
     log( os.path.join(dir,'index.apxl') )
     parsedDom = xml.dom.minidom.parse(os.path.join(dir,'index.apxl'))
     log( parsedDom.documentElement.tagName )     
