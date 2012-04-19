@@ -192,7 +192,7 @@ def parseDrawables(drawables,baseLeft,baseTop):
                     if tracedPath:
                         log( ' tracedPath:%s'%(tracedPath.getAttribute('sfa:path')) )
                 elif unfilteredRef:
-                    id = unfilteredRef.getAttribute('sfa:ID')
+                    id = unfilteredRef.getAttribute('sfa:IDREF')
                     if id in unfilteredImages.keys():
                         path = unfilteredImages[id]
                         log( ' filePath:%s'%(path) )
@@ -330,15 +330,18 @@ def unarchive(zipFilePath):
     dir,ext = os.path.splitext(zipFilePath)
     
     if os.path.exists(zipFilePath)==False:
-        return False,'%s is not exist'%zipFilePath,dir
+        print '%s is not exist'%zipFilePath
+        return None
     if ext != '.key':
-        return False,'%s is not KeyNote09 file'%zipFilePath,dir
+        print '%s is not KeyNote09 file'%zipFilePath
+        return None
     if os.path.exists(dir):
         if os.path.isdir(dir):
             print '%s is already exist.' %dir
             print 'overwriting %s ...' %dir
         else:
-            return False,'%s is already exist as file. remove it! '%dir,dir
+            print '%s is already exist as file. remove it! '%dir
+            return None
     else:
         os.mkdir(dir, 0777)
 
@@ -370,7 +373,7 @@ def pageCount(folderpath):
     dom1 = xml.dom.minidom.parse(os.path.join(folderpath,'index.apxl'))
     slides = getElmList(getElm(dom1,'key:slide-list'),'key:slide')
     c = len(slides)
-    dom1.unlink
+    dom1.unlink()
     return c
 
 def parseDrawablesForBaseLeftTop(dom,drawables):
@@ -485,6 +488,8 @@ def main():
         quit()
     path = os.path.abspath(sys.argv[1])
     folderpath = unarchive(path)
+    if folderpath is None:
+        exit(1)
     pages = pageCount(folderpath)
     for i in range(1,pages+1):
         parseApxm(folderpath,i)
