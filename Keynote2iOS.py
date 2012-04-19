@@ -163,7 +163,7 @@ def createSrcOfBezier(id,bezier,styleRef,posX,posY):
     ret.append('CGContextStrokePath(context);')
     return ret
         
-def parseDrawables(drawables):
+def parseDrawables(drawables,baseLeft,baseTop):
     for drawObj in drawables.childNodes:
         if drawObj.tagName == 'sf:media':
             imageMedia = getElm(getElm(drawObj,'sf:content'),'sf:image-media')
@@ -253,7 +253,7 @@ def parseDrawables(drawables):
         elif drawObj.tagName == 'sf:group':
             log( 'group' )
             parseGeometory(drawObj)
-            parseDrawables(drawObj)
+            parseDrawables(drawObj,baseLeft,baseTop)
                 
     #print 'hoge'
 def parseColor(color):
@@ -369,7 +369,62 @@ def unarchive(zipFilePath):
 def pageCount(folderpath):
     dom1 = xml.dom.minidom.parse(os.path.join(folderpath,'index.apxl'))
     slides = getElmList(getElm(dom1,'key:slide-list'),'key:slide')
-    return len(slides)
+    c = len(slides)
+    dom1.unlink
+    return c
+
+def parseDrawablesForBaseLeftTop(dom,drawables):
+    baseLeft = 0;
+    baseTop = 0;
+    
+    for drawObj in drawables.childNodes:
+        if drawObj.tagName != 'sf:media':
+            continue
+        imageMedia = getElm(getElm(drawObj,'sf:content'),'sf:image-media')
+        log( imageMedia.tagName )
+        if imageMedia.tagName!='sf:image-media':
+            continue
+        
+        left,top,width,height=parseGeometory(drawObj)
+                
+        unfiltered = getElm(getElm(imageMedia,'sf:filtered-image'),'sf:unfiltered')
+        unfilteredRef = getElm(getElm(imageMedia,'sf:filtered-image'),'sf:unfiltered-ref')
+        if unfilteredRef!=None:
+            refId = unfilteredRef.getAttribute('sfa:IDREF')
+            elmList = [node for node in dom.getElementsByTagName("sf:unfiltered") 
+                             if node.getAttribute('sfa:ID') == refId]
+            if len(elmList)>0:
+                unfiltered = elmList[0]
+                             
+        if unfiltered!=None:
+            id = unfiltered.getAttribute('sfa:ID')
+            log ("id:%s"%id)
+            data = getElm(unfiltered,'sf:data')
+            path = data.getAttribute('sf:path')
+            if path=='__base.png':
+                log("@@left:%d,top:%d"%(left,top))
+                return left,top  # find !!
+        
+    return baseLeft,baseTop
+                   
+
+def getBaseLeftTopFromSlide(dom,slide):
+    left = 0
+    top = 0
+    #key:master-slide/key:page/sf:layers/sf:layer/sf:drawables/sf:media:/(sf:geometory/sf:position,sf:content/sf:image-media/sf:filtered-image/sf:unfiltered:/sf:data[sf_path="__base.png"])
+    
+    layers = getElm(getElm(slide,'key:page'),'sf:layers')
+    log(layers.childNodes)
+    for layer in layers.childNodes:
+        typeString = getElm(getElm(layer,'sf:type'),'sf:string').getAttribute('sfa:string')
+        if typeString!='BGMasterSlideLayer':
+            continue
+            
+        drawables = getElm(layer,'sf:drawables')
+        log(drawables)
+        left,top = parseDrawablesForBaseLeftTop(dom,drawables)
+    
+    return left,top
 
 def parseApxm(dir,pageNum):
     #parseする。forgraundLayerまでたどり着き、あとはdrawablesをparseDrawablesに任せる
@@ -379,12 +434,13 @@ def parseApxm(dir,pageNum):
     print '===== page %d ====='%pageNum
     pageNum-=1
     log( os.path.join(dir,'index.apxl') )
-    dom1 = xml.dom.minidom.parse(os.path.join(dir,'index.apxl'))
-    log( dom1.documentElement.tagName )     
-    slides = getElmList(getElm(dom1,'key:slide-list'),'key:slide')
+    parsedDom = xml.dom.minidom.parse(os.path.join(dir,'index.apxl'))
+    log( parsedDom.documentElement.tagName )     
+    themes = getElmList(getElm(parsedDom,'key:theme-list'),'key:theme') # key:master-slides / key:master-slide sfa:ID="BGMasterSlide-3" / key:page
+    slides = getElmList(getElm(parsedDom,'key:slide-list'),'key:slide')
     if (pageNum >= len(slides)):
         print 'Error:slides do not have page %d'%pageNum
-        dom1.unlink()
+        parsedDom.unlink()
         return 
     slide = slides[pageNum]
     
@@ -394,22 +450,33 @@ def parseApxm(dir,pageNum):
     for anonStyle in anonStyles.childNodes:
         parseStyles(anonStyle)
     
+    baseLeft,baseTop = 0,0
+    masterRefId = getElm(slide,'key:master-ref').getAttribute('sfa:IDREF')
+    log ( 'masterRefId:%s'%masterRefId )
+    for theme in themes:
+        masterSlides = getElmList(getElm(theme, 'key:master-slides'),'key:master-slide')
+        for masterSlide in masterSlides:
+            masterId = masterSlide.getAttribute('sfa:ID')
+            if masterId == masterRefId:
+                baseLeft,baseTop = getBaseLeftTopFromSlide(parsedDom,masterSlide)
+                log ( 'x:%d,y%d'%(baseTop,baseLeft) )
+                break
     
     layers = getElm(getElm(slide,'key:page'),'sf:layers')
     # key:page->sf:layers->sf;layer[sf:type->sf:string.sfa:string='BGSlideForegroundLayer']
     # ->sf:drawables->sf:media
     for layer in layers.childNodes:
         typeString = getElm(getElm(layer,'sf:type'),'sf:string').getAttribute('sfa:string')
-        #print typeString
-        if typeString=='BGSlideForegroundLayer':
-            drawables = getElm(layer,'sf:drawables')
-            parseDrawables(drawables)
+        if typeString!='BGSlideForegroundLayer':
+            continue
+        drawables = getElm(layer,'sf:drawables')
+        parseDrawables(drawables,baseLeft,baseTop)
 
 #    n = slide
 #    print getText(n)
 #    print n.getAttribute('sfa:ID')
 #    print n.getAttribute('key:depth')
-    dom1.unlink()
+    parsedDom.unlink()
 
 def main():
     if len(sys.argv) <2:
