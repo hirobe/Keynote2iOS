@@ -24,6 +24,8 @@ outputDraws = []
 unfilteredImages = {}
 uiNameCountDic = {}
 
+parentDescription='self.view'
+
 class MyClass(object):
     '''
     classdocs
@@ -235,9 +237,9 @@ def parseDrawables(drawables,baseLeft,baseTop):
                         continue
                     
                     if href is None:
-                        outputAddImage(left-baseLeft,top-baseTop,width,height,path,'self')
+                        outputAddImage(left-baseLeft,top-baseTop,width,height,path,parentDescription)
                     else:
-                        outputAddButton(left-baseLeft,top-baseTop,width,height,path,'self')
+                        outputAddButton(left-baseLeft,top-baseTop,width,height,path,parentDescription)
                     
                     
                     unfilteredImages[id]=path
@@ -290,7 +292,7 @@ def parseDrawables(drawables,baseLeft,baseTop):
                     text = getText(p)
                     pStyleName = p.getAttribute('sf:style')
                     if len(text)>0:
-                        outputAddLabel(left-baseLeft,top-baseTop,width,height,text,'self',[pStyleName])
+                        outputAddLabel(left-baseLeft,top-baseTop,width,height,text,parentDescription,[pStyleName])
                     spanList = getElmList(p,'sf:span')
                     for span in spanList:
                         text = getText(span)
