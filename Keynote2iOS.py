@@ -82,7 +82,7 @@ def outputAddImage(left,top,width,height,filename,parentName):
     viewName = makeUIName(filename[:-4]+"ImageView")
 
     print '    UIImageView *%s = [[UIImageView alloc] init];'%viewName
-    print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff)];'%(viewName,left,top,width,height)
+    print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff);'%(viewName,left,top,width,height)
     print '    %s.image = [UIImage imageNamed:@"%s"];'%(viewName,filename)
     print '    [%s addSubview:%s];'%(parentName,viewName)
     print '    [%s release];'%viewName
@@ -95,11 +95,11 @@ def outputAddButton(left,top,width,height,filename,parentName):
 
     print '    UIButton *%s = [UIButton buttonWithType:UIButtonTypeCustom];'%viewName
     print '    %s.exclusiveTouch = YES;'%viewName
-    print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff)];'%(viewName,left,top,width,height)
+    print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff);'%(viewName,left,top,width,height)
     print '    [%s setImage:[UIImage imageNamed:@"%s"] forState:UIControlStateNormal];'%(viewName,filename)
     print '    //[%s addTarget:self action:@selector(%sTouched:) forControlEvents:UIControlEventTouchUpInside];'%(viewName,viewName)
     print '    [%s addSubview:%s];'%(parentName,viewName)
-    print '    [%s release];'%viewName
+    #print '    [%s release];'%viewName
     print ''
 
 def outputAddLabel(left,top,width,height,text,parentName,styleNames):
@@ -116,8 +116,8 @@ def outputAddLabel(left,top,width,height,text,parentName,styleNames):
                 styles[key] = tempStyle[key]
     
     
-    print '    UILabel *%s = [[UILabel alloc] init'%viewName
-    print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff)];'%(viewName,left,top,width,height)
+    print '    UILabel *%s = [[UILabel alloc] init];'%viewName
+    print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff);'%(viewName,left,top,width,height)
     #print '%s'%text.encode('utf-8')
     print '    %s.text = @"%s";'%(viewName,text.encode('utf-8'))
     if 'fontName' in styles.keys():
@@ -130,6 +130,7 @@ def outputAddLabel(left,top,width,height,text,parentName,styleNames):
     #print '    statusLabel.shadowColor = [UIColor darkGrayColor];'
     #print '    statusLabel.shadowOffset = CGSizeMake(0.0f, -1.0f);'
     print '    %s.backgroundColor = [UIColor clearColor];'%viewName
+    print '    //label.textAlignment = UITextAlignmentCenter;'
     print '    [%s addSubview:%s];'%(parentName,viewName)
     print '    [%s release];'%viewName
     print ''
@@ -216,7 +217,7 @@ def createSrcOfBezier(id,bezier,styleRef,posX,posY):
     ret.append('CGContextStrokePath(context);')
     return ret
         
-def parseDrawables(drawables,baseLeft,baseTop):
+def parseDrawables(dom,drawables,baseLeft,baseTop):
     for drawObj in drawables.childNodes:
         if drawObj.tagName == 'sf:media':
             # hyper link sf:href="?slide=+1"
@@ -232,7 +233,13 @@ def parseDrawables(drawables,baseLeft,baseTop):
                 
                 unfiltered = getElm(getElm(imageMedia,'sf:filtered-image'),'sf:unfiltered')
                 unfilteredRef = getElm(getElm(imageMedia,'sf:filtered-image'),'sf:unfiltered-ref')
-                if unfiltered!=None:
+                if unfilteredRef:
+                    refId = unfilteredRef.getAttribute('sfa:IDREF')
+                    elmList = [node for node in dom.getElementsByTagName("sf:unfiltered") 
+                             if node.getAttribute('sfa:ID') == refId]
+                    if len(elmList)>0:
+                        unfiltered = elmList[0]
+                if unfiltered:
                     id = unfiltered.getAttribute('sfa:ID')
                     data = getElm(unfiltered,'sf:data')
                     path = data.getAttribute('sf:path')
@@ -247,19 +254,12 @@ def parseDrawables(drawables,baseLeft,baseTop):
                     else:
                         outputAddImage(left-baseLeft,top-baseTop,width,height,path,parentDescription)
                     
-                    
                     unfilteredImages[id]=path
-                    
                     tracedPath = getElm(imageMedia,'sf:traced-path')
                     if tracedPath:
                         log( ' tracedPath:%s'%(tracedPath.getAttribute('sfa:path')) )
-                elif unfilteredRef:
-                    id = unfilteredRef.getAttribute('sfa:IDREF')
-                    if id in unfilteredImages.keys():
-                        path = unfilteredImages[id]
-                        log( ' filePath:%s'%(path) )
-                        
-                    pass
+                    
+                    
                 #mediaType = drawObj.getElementsByTagName('st:content')[0].childNodes #[0].tagName
                 #print 
         elif drawObj.tagName == 'sf:shape':
@@ -316,7 +316,7 @@ def parseDrawables(drawables,baseLeft,baseTop):
         elif drawObj.tagName == 'sf:group':
             log( 'group' )
             parseGeometory(drawObj)
-            parseDrawables(drawObj,baseLeft,baseTop)
+            parseDrawables(dom,drawObj,baseLeft,baseTop)
                 
     #print 'hoge'
 def parseColor(color):
@@ -537,7 +537,7 @@ def parseApxm(dir,pageNum):
         if typeString!='BGSlideForegroundLayer':
             continue
         drawables = getElm(layer,'sf:drawables')
-        parseDrawables(drawables,baseLeft,baseTop)
+        parseDrawables(parsedDom,drawables,baseLeft,baseTop)
 
 #    n = slide
 #    print getText(n)
