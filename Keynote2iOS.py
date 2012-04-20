@@ -8,6 +8,10 @@ Created on 2009/09/30
 '''
 import sys, zipfile, os, os.path
 import xml.dom.minidom
+import codecs
+
+#import sys, codecs
+#sys.stdout = codecs.EncodedFile(sys.stdout, 'utf_8')  
 
 
 #parseでmaximum recursion depthが起きないように
@@ -114,7 +118,8 @@ def outputAddLabel(left,top,width,height,text,parentName,styleNames):
     
     print '    UILabel *%s = [[UILabel alloc] init'%viewName
     print '    %s.frame = CGRectMake(%.1ff, %.1ff, %.1ff, %.1ff)];'%(viewName,left,top,width,height)
-    print '    %s.text = @"%s";'%(viewName,text)
+    #print '%s'%text.encode('utf-8')
+    print '    %s.text = @"%s";'%(viewName,text.encode('utf-8'))
     if 'fontName' in styles.keys():
         print '    //fontName:%s'%styles['fontName']
     if 'fontSize' in styles.keys():
