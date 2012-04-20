@@ -91,7 +91,7 @@ def outputAddImage(left,top,width,height,filename,parentName):
 def outputAddButton(left,top,width,height,filename,parentName):
     if filename[-7:].lower()=='@2x.png':
         filename = filename[:-7]+'.png'
-    viewName = makeUIName(filename[:-4]+"ImageView")
+    viewName = makeUIName(filename[:-4]+"Button")
 
     print '    UIButton *%s = [UIButton buttonWithType:UIButtonTypeCustom];'%viewName
     print '    %s.exclusiveTouch = YES;'%viewName
@@ -241,10 +241,11 @@ def parseDrawables(drawables,baseLeft,baseTop):
                     if path[-4:].lower() == '.jpg' or path[-5:].lower() == '.jpeg':
                         continue
                     
-                    if href is None:
-                        outputAddImage(left-baseLeft,top-baseTop,width,height,path,parentDescription)
-                    else:
+                    if len(href)>0:
+                        #print href
                         outputAddButton(left-baseLeft,top-baseTop,width,height,path,parentDescription)
+                    else:
+                        outputAddImage(left-baseLeft,top-baseTop,width,height,path,parentDescription)
                     
                     
                     unfilteredImages[id]=path
